@@ -1,70 +1,26 @@
-
 <?php
 
-header('Content-Type: application/json; charset=utf-8');
+header("Content-Type: application/json");
 
-// Validate input parameters
-if (!isset($_GET['studentId']) || empty($_GET['studentId'])) {
-    $response = [
-        'error' => 'Please provide the studentId parameter.'
-    ];
-    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-if (!isset($_GET['semesterId']) || empty($_GET['semesterId'])) {
-    $response = [
-        'error' => 'Please provide the semesterId parameter.'
-    ];
-    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-// Input parameters
-$studentId = $_GET['studentId'];
-$semesterId = $_GET['semesterId'];
-
-// API URLs
-$studentInfoUrl = "http://software.diu.edu.bd:8006/result/studentInfo?studentId=$studentId";
-$semesterResultUrl = "http://software.diu.edu.bd:8006/result?grecaptcha=&semesterId=$semesterId&studentId=$studentId";
-
-// Function to fetch data from an API
-function fetchData($url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Skip SSL verification
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
-    curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0");
-
-    $response = curl_exec($ch);
-
+function fetchVerificationData($studentId) {
+    $apiUrl = "http://software.diu.edu.bd:8006/bus/verify?studentId=" . urlencode($studentId);
+    
+    $response = file_get_contents($apiUrl);
     if ($response === false) {
-        $error = curl_error($ch);
-        curl_close($ch);
-        return ['error' => "cURL Error: $error"];
+        http_response_code(500);
+        return json_encode(["error" => "Failed to fetch data"]);
     }
 
-    curl_close($ch);
-
-    $decodedResponse = json_decode($response, true);
-    if ($decodedResponse === null && json_last_error() !== JSON_ERROR_NONE) {
-        return ['error' => "Error decoding JSON: " . json_last_error_msg()];
-    }
-
-    return $decodedResponse;
+    return $response;
 }
 
-// Fetch data from both APIs
-$studentInfo = fetchData($studentInfoUrl);
-$semesterResult = fetchData($semesterResultUrl);
+if (!isset($_GET['studentId'])) {
+    http_response_code(400);
+    echo json_encode(["error" => "studentId parameter is required"]);
+    exit;
+}
 
-// Combine the responses
-$response = [
-    'studentInfo' => $studentInfo,
-    'semesterResult' => $semesterResult
-];
+$studentId = $_GET['studentId'];
+echo fetchVerificationData($studentId);
 
-// Output the combined response
-echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 ?>
