@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: php-api
+    env: docker
+    buildCommand: ''
+    startCommand: 'apache2-foreground'
+    plan: free
+    ports:
+      - 80
+    autoDeploy: true
