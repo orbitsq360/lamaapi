@@ -1,18 +1,32 @@
+
 <?php
 
 header('Content-Type: application/json; charset=utf-8');
 
 // Validate input parameters
-if (!isset($_GET['studentId']) || empty(trim($_GET['studentId']))) {
-    echo json_encode(['error' => 'Please provide a valid studentId.'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+if (!isset($_GET['studentId']) || empty($_GET['studentId'])) {
+    $response = [
+        'error' => 'Please provide the studentId parameter.'
+    ];
+    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// Sanitize input
-$studentId = htmlspecialchars(trim($_GET['studentId']), ENT_QUOTES, 'UTF-8');
+if (!isset($_GET['semesterId']) || empty($_GET['semesterId'])) {
+    $response = [
+        'error' => 'Please provide the semesterId parameter.'
+    ];
+    echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
-// API URL
-$apiUrl = "http://software.diu.edu.bd:8006/bus/verify?studentId=" . urlencode($studentId);
+// Input parameters
+$studentId = $_GET['studentId'];
+$semesterId = $_GET['semesterId'];
+
+// API URLs
+$studentInfoUrl = "http://software.diu.edu.bd:8006/result/studentInfo?studentId=$studentId";
+$semesterResultUrl = "http://software.diu.edu.bd:8006/result?grecaptcha=&semesterId=$semesterId&studentId=$studentId";
 
 // Function to fetch data from an API
 function fetchData($url) {
@@ -20,7 +34,7 @@ function fetchData($url) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Skip SSL verification
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
     curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:104.0) Gecko/20100101 Firefox/104.0");
 
     $response = curl_exec($ch);
@@ -41,10 +55,16 @@ function fetchData($url) {
     return $decodedResponse;
 }
 
-// Fetch bus pass details
-$busPassData = fetchData($apiUrl);
+// Fetch data from both APIs
+$studentInfo = fetchData($studentInfoUrl);
+$semesterResult = fetchData($semesterResultUrl);
 
-// Output the response
-echo json_encode($busPassData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+// Combine the responses
+$response = [
+    'studentInfo' => $studentInfo,
+    'semesterResult' => $semesterResult
+];
 
+// Output the combined response
+echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 ?>
