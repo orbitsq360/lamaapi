@@ -3,16 +3,16 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // Validate input parameters
-if (!isset($_GET['studentId']) || !is_numeric($_GET['studentId']) || empty(trim($_GET['studentId']))) {
-    echo json_encode(['error' => 'Please provide a valid studentId (numeric).'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+if (!isset($_GET['studentId']) || empty(trim($_GET['studentId']))) {
+    echo json_encode(['error' => 'Please provide a valid studentId.'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 // Sanitize input
 $studentId = htmlspecialchars(trim($_GET['studentId']), ENT_QUOTES, 'UTF-8');
 
-// Get API URL from environment variable or fallback to default
-$apiUrl = getenv('API_URL') ?: "http://software.diu.edu.bd:8006/bus/verify?studentId=" . urlencode($studentId);
+// API URL
+$apiUrl = "http://software.diu.edu.bd:8006/bus/verify?studentId=" . urlencode($studentId);
 
 // Function to fetch data from an API
 function fetchData($url) {
@@ -43,12 +43,6 @@ function fetchData($url) {
 
 // Fetch bus pass details
 $busPassData = fetchData($apiUrl);
-
-// Check if API returned an error
-if (isset($busPassData['error'])) {
-    echo json_encode($busPassData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    exit;
-}
 
 // Output the response
 echo json_encode($busPassData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
